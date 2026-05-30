@@ -1,0 +1,75 @@
+############ Classification-agent LLM call ###############
+
+You are a customer-support operations assistant. Return concise and production-safe output. Classify this customer-support request into one of: billing, tech, general. 
+source: email
+content: Invoice discrepancy for last month statement. Please review and correct.
+JSON schema: {\"category\":\"billing|tech|general\"
+
+Return ONLY valid JSON. Do not include markdown code fences.
+
+**** LLM Output ****
+{"category":"billing"}
+
+
+
+################ Billing-agent LLM call ##################
+You are the Billing support agent. Analyze the request and produce an operational response.
+request_id: DEMO-BILL-001
+source: email
+content: Invoice discrepancy for last month statement. Please review and correct.
+Rules:
+	- status must be one of: resolved, in_progress, investigating, processing, escalated, critical, debugging, received
+	- priority must be one of: low, medium, high, critical
+	- details must be <= 240 chars and action-oriented
+	JSON schema: {\"status\": str, \"priority\": str, \"details\": str, \"attempts\": int}
+
+**** LLM Output ****
+{"status":"investigating","priority":"medium","details":"Reviewing last month statement and validating invoice line items. We will correct discrepancies and send an updated invoice with a resolution summary.","attempts":1}
+
+
+		
+################ Tech-agent LLM call ######################
+You are the Tech support agent. Analyze the request and produce an operational response.
+request_id: DEMO-TECH-001
+source: ticket
+content: System outage and database error in production
+Rules:
+	- status must be one of: resolved, in_progress, investigating, processing, escalated, critical, debugging, received
+	- priority must be one of: low, medium, high, critical
+	- details must be <= 240 chars and action-oriented
+	JSON schema: {\"status\": str, \"priority\": str, \"details\": str, \"attempts\": int}
+	
+**** LLM Output ****
+{"status":"critical","priority":"critical","details":"Declared P1 incident for production outage and database errors. Engaging on-call DB and platform teams, initiating rollback/failover checks, and providing 15-minute status updates until service is restored.","attempts":1}
+
+
+
+################ Escalation-agent LLM call ######################
+You are a customer-support operations assistant. Return concise and production-safe output. 
+event: 	{'status': 'investigating', 'details': 'Investigating system outage and database error in production. Immediate action is being taken to identify and resolve the issue.', 'priority': 'critical', 'attempts': 1, 'request_id': 'DEMO-TECH-001', 'processed_at': '2026-05-29T06:22:29.344397', 'processor': 'AITechProcessor', 'source': 'ticket', 'content': 'System outage and database error in production'}
+
+JSON schema: {\"risk_level\":\"low|medium|high|critical\", 
+\"requires_escalation\": bool, 
+\"attempts_hint\": int, 
+\"rationale\": str}	
+
+Return ONLY valid JSON. Do not include markdown code fences.
+
+**** LLM Output ****
+{"risk_level":"critical","requires_escalation":true,"attempts_hint":1,"rationale":"Production outage with database errors and critical priority indicates high operational impact and customer risk; immediate escalation is required."}
+
+
+
+################ Audit-agent LLM call ######################
+You are a customer-support operations assistant. Return concise and production-safe output. 
+Return ONLY valid JSON. Do not include markdown code fences.
+event: {'status': 'received', 'details': 'Received urgent invoice issue. Reviewing details and will respond shortly with a resolution.', 'priority': 'high', 'attempts': 1, 'request_id': 'DEMO-BILL-001', 'processed_at': '2026-05-29T07:02:32.998912', 'processor': 'AIBillingProcessor', 'source': 'email', 'content': 'URGENT invoice issue'}
+JSON schema: {\"risk_level\":\"low|medium|high|critical\",
+\"requires_escalation\": bool,
+\"attempts_hint\": int,
+\"rationale\": str}
+
+**** LLM Output ****
+{"risk_level":"high","requires_escalation":true,"attempts_hint":1,"rationale":"The request is marked urgent and may impact billing trust and customer experience, so escalation is recommended for rapid specialist review."}
+
+
